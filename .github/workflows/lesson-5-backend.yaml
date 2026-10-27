@@ -3,33 +3,28 @@ name: Lesson 5 SAST
 on:
   push:
     branches:
-      - lesson-5-complete
+      - lesson-5
 jobs:
   security_test:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: backend
-    name: Execute the PyCharm security test
+    name: Run pycharm security test
     steps:
       - uses: actions/checkout@v7.0.1
-      - name: Disable Debug
-        run: |
-          sed -i 's/DEBUG = True/DEBUG = False/g' hangry_api/hangry_api/settings.py
-      - name: Run PyCharm Security
+      - name: Run pycharm security test
         uses: tonybaloney/pycharm-security@1.25.1
-        with:
-          fail_on_warnings: 'yes'
-  unit_test:
+  build_and_test:
     needs: [security_test]
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: backend
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@v4
       - name: Set up Python 3.10
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
       - name: Install dependencies
@@ -41,16 +36,13 @@ jobs:
           coverage run -m --source=./hangry_api pytest
           coverage report
   deploy:
-    needs: [unit_test]
+    needs: [build_and_test]
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: backend
     steps:
-      - uses: actions/checkout@v7.0.1
-      - name: Disable Debug
-        run: |
-          sed -i 's/DEBUG = True/DEBUG = False/g' hangry_api/hangry_api/settings.py
+      - uses: actions/checkout@v4
       - name: Generate deployment package
         run: zip -r deploy.zip . -x '*.git*'
       - name: '**PLACEHOLDER** Deploy to Elastic Beanstalk'
